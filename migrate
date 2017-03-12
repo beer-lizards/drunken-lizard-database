@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+
+# Displays help
+function help() {
+  cat << EOF
+Usage: ./migrate.sh [options...]
+
+Options:
+  -d, --database
+      --help
+  -p, --pasword
+  -P, --port
+  -s, --server
+  -u, --user
+EOF
+}
+
+if [ $# -eq 0 ]; then
+  help
+  exit
+fi
+
+which psql 2>&1 >/dev/null
+if [ $? -ne 0 ]; then
+    echo "psql could not be found in your path."
+    exit 1
+fi
+
+which flyway 2>&1 >/dev/null
+if [ $? -ne 0 ]; then
+    echo "flyway could not be found in your path."
+    exit 1
+fi
+
+while [[ $# -gt 1 ]]
+do
+key="$1"
+
+case $key in
+  -d|--database)
+  DATABASE="$2"
+  shift
+  ;;
+  -p|--password)
+  DATABASE_PASSWORD="$2"
+  shift
+  ;;
+  -P|--port)
+  DATABASE_PORT="$2"
+  shift
+  ;;
+  -s|--server)
+  DATABASE_IP="$2"
+  shift
+  ;;
+  -u|--user)
+  DATABASE_USERNAME="$2"
+  shift
+  ;;
+  *)
+  echo "Invalid argument: use --help for usage"
+  exit
+  ;;
+esac
+shift # past argument or value
+done
+
+if [ -z $DATABASE ]; then
+    echo "Please specify a database with -d"
+    exit
+fi
+
+if [ -z $DATABASE_USERNAME ]; then
+    DATABASE_USERNAME=drunken
+fi
+
+if [ -z $DATABASE_IP ]; then
+    DATABASE_IP=localhost
+fi
+
+if [ -z $DATABASE_PORT ]; then
+    DATABASE_PORT=5432
+fi
+
+if [ -z $DATABASE_PASSWORD ]; then
+    DATABASE_PASSWORD=lizard
+fi
+
+echo "Connecting to $DATABASE_IP:$DATABASE_PORT"
+
+# Clean any old databases
+db_exists=`PGPASSWORD=$DATABASE_PASSWORD psql \
+  -h $DATABASE_IP \
+  -p $DATABASE_PORT \
+  -U $DATABASE_USERNAME \
+  -d 'postgres' \
+  -w -c "SELECT 1 FROM pg_database WHERE datname = '${DATABASE}'" | tail -n 2`
+
+if [ "${db_exists}" == "(1 row)" ]; then
+  PGPASSWORD=$DATABASE_PASSWORD psql \
+    -h $DATABASE_IP \
+    -p $DATABASE_PORT \
+    -U $DATABASE_USERNAME \
+    -d 'postgres' \
+    -w -c "drop database ${DATABASE}"
+fi
+
+# Create database
+PGPASSWORD=$DATABASE_PASSWORD psql \
+  -h $DATABASE_IP \
+  -p $DATABASE_PORT \
+  -U $DATABASE_USERNAME \
+  -d 'postgres' \
+  -w -c "create database ${DATABASE}"
+
+# Flyway migrate
+flyway -user=${DATABASE_USERNAME} -password=${DATABASE_PASSWORD} \
+    -url="jdbc:postgresql://${DATABASE_IP}:${DATABASE_PORT}/${DATABASE}" \
+    clean migrate
