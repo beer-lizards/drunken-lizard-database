@@ -15,6 +15,18 @@ optionally the database credentials. Flyway will apply the default values from
 the `flyway.conf` in the root of this repository and will override those values
 with any values from your custom configuration.
 
+### Flyway properties
+
+The following placeholders need to be populated in the flyway.conf:
+
+```sh
+flyway.placeholders.admin_email=
+flyway.placeholders.admin_password_algorithm=
+flyway.placeholders.admin_password_hash=
+flyway.placeholders.admin_password_salt=
+flyway.placeholders.admin_user=
+```
+
 ### Database connection string.
 flyway.url=jdbc:postgresql://<database-ip>:<database-port>/drunken_lizard
 
