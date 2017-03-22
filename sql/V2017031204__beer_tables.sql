@@ -10,6 +10,7 @@
  * beer_id: The generated id for a beer.
  * description: The cleaned up beer description.
  * name: The cleaned up beer name.
+ * tour_beer_number: The winking lizard tour beer number.
  * tour_data: The raw tour data.
  * tour_description: The raw description provided by the winking lizard tour.
  * tour_item_id: The identifier that the winking lizard tour uses to identify
@@ -24,6 +25,7 @@ CREATE TABLE drunken_lizard.beer (
   beer_id BIGINT NOT NULL,
   description TEXT NOT NULL,
   name TEXT NOT NULL,
+  tour_beer_number BIGINT NOT NULL,
   tour_data JSONB NOT NULL,
   tour_description TEXT NOT NULL,
   tour_item_id BIGINT NOT NULL,
